@@ -246,7 +246,7 @@ namespace SpatokenBassedAuthentication.Controllers
     }
 }
 //======================================PostMan web api Hit Request==============================
-1-open postdman
+1-open postman
 2-select http post then go to Body>select Raw then select Json Application
 =======================
 3-Request Object is
