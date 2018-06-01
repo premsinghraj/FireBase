@@ -1,0 +1,249 @@
+using MobileAppWebApi.Models;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using SpatokenBassedAuthentication.Models;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Text;
+using System.Web.Http;
+using System.Web.Http.Results;
+using System.Web.Mvc;
+using System.Web.Script.Serialization;
+using System.Xml;
+using System.Xml.Linq;
+using System.Data;
+using System.Data.Entity.Core.Objects;
+
+namespace SpatokenBassedAuthentication.Controllers
+{
+    public class FBController : ApiController
+    {
+        DataTable Dtfirbase = null;
+        DataRow DrFireBase = null;
+        DataTable DtFnlFB = null;
+        DataRow DRFnlFB = null;
+        //int Result = 0;
+        int count,count1 = 0;
+        JsonResponse objJsonResponse = null;
+        FireBaseEntity fbentity = null;
+        FireBase_Convrt fbcnvrt = new FireBase_Convrt();
+        string la_titude, lon_gitude, coordinate;
+        List<FireBase_Convrt> Listconvert = new List<FireBase_Convrt>();
+        XmlDocument xDoc = new XmlDocument();
+        XmlNodeList xNodelst = null;
+        XmlNode xNode = null;
+
+        [System.Web.Http.HttpPost]
+        //public JsonResponse getdata(string employeeCode,DateTime timeStampDt)
+        public JsonResponse getdata(FireBase_Convrt fb)
+        {
+            List<string> lstPName = new List<string>();
+            List<FireBaseEntity> lst = new List<FireBaseEntity>();
+            fbentity = new FireBaseEntity();
+            objJsonResponse = new JsonResponse();
+            string JsonData = null;
+            //FirebaseDB firebaseDB = new FirebaseDB("https://mapstimeline-ea8c0.firebaseio.com/");
+            string url = "https://mapstimeline-ea8c0.firebaseio.com/.json";
+            HttpWebRequest request1 = (HttpWebRequest)WebRequest.Create(url);
+            request1.ContentType = "Application/Json";
+            HttpWebResponse response1 = request1.GetResponse() as HttpWebResponse;
+            using (Stream Responsestream = response1.GetResponseStream())
+            {
+                StreamReader read = new StreamReader(Responsestream, Encoding.Default);
+                JsonData = read.ReadToEnd();
+            }
+            JsonData = JsonData.Replace("\\", "");
+            //var dict = new JavaScriptSerializer().Deserialize<Dictionary<string, object>>(JsonData);
+            var table = JsonConvert.DeserializeObject(JsonData);
+            //var tabledt= firebase.database()
+            
+            if (table.ToString() != "")
+            {
+                JObject joResponse = JObject.Parse(table.ToString());
+                JObject ojObject = (JObject)joResponse["check2"];
+                if (ojObject.Count > 0)
+                {
+                    try
+                    {
+                        Dtfirbase = new DataTable();
+                        Dtfirbase.Columns.Add(new DataColumn("Keyvalue", typeof(string)));
+                        // Dtfirbase.Columns.Add(new DataColumn("UserName", typeof(string)));
+                        // Dtfirbase.Columns.Add(new DataColumn("Email_Id", typeof(string)));
+                        Dtfirbase.Columns.Add(new DataColumn("EmployeeCode", typeof(string)));
+                        Dtfirbase.Columns.Add(new DataColumn("FullAddress", typeof(string)));
+                        Dtfirbase.Columns.Add(new DataColumn("Timestamp_dt", typeof(string)));
+                        Dtfirbase.Columns.Add(new DataColumn("Latitude", typeof(string)));
+                        Dtfirbase.Columns.Add(new DataColumn("Longitude", typeof(string)));
+                        Dtfirbase.Columns.Add(new DataColumn("vehicle_mode_f", typeof(string)));
+                        Dtfirbase.Columns.Add(new DataColumn("total_distance_travelled_f", typeof(string)));
+                        DtFnlFB = new DataTable();
+                        DtFnlFB.Columns.Add(new DataColumn("Keyvalue", typeof(string)));
+                        DtFnlFB.Columns.Add(new DataColumn("EmployeeCode", typeof(string)));
+                        DtFnlFB.Columns.Add(new DataColumn("FullAddress", typeof(string)));
+                        DtFnlFB.Columns.Add(new DataColumn("Timestamp_dt", typeof(string)));
+                        DtFnlFB.Columns.Add(new DataColumn("vehicle_mode_f", typeof(string)));
+                        DtFnlFB.Columns.Add(new DataColumn("ErrorMsg", typeof(string)));
+                        DtFnlFB.Columns.Add(new DataColumn("total_distance_travelled_f", typeof(string)));
+                        // DtFnlFB.Columns.Add(new DataColumn("UserName", typeof(string)));
+                        // DtFnlFB.Columns.Add(new DataColumn("Email_Id", typeof(string)));
+                        // DtFnlFB.Columns.Add(new DataColumn("Mobile_No", typeof(string)));
+                        foreach (var kv in ojObject)
+                        {
+                            DrFireBase = Dtfirbase.NewRow();
+                            var lkey = kv.Key;
+                            var address = ojObject[lkey];
+                            // DrFireBase["UserName"] = address["UserName"].ToString();
+                            //  DrFireBase["Email_Id"] = address["Email_Id"].ToString();
+                            //  DrFireBase["Mobile_No"] = address["Mobile_No"].ToString();
+                            DrFireBase["Keyvalue"] = lkey;
+                            DrFireBase["EmployeeCode"] = address["EmployeeCode"].ToString();
+                            DrFireBase["Timestamp_dt"] = address["date"].ToString();
+                            DrFireBase["Latitude"] = address["latitide_f"].ToString();
+                            DrFireBase["Longitude"] = address["longitude_f"].ToString();
+                            DrFireBase["vehicle_mode_f"] = address["vehicle_mode_f"].ToString();
+                            DrFireBase["total_distance_travelled_f"] = address["total_distance_travelled_f"].ToString();
+                            Dtfirbase.Rows.Add(DrFireBase);
+                        }
+                        // test code pankaj
+
+                        List<FireBase_Convrt> testList = new List<FireBase_Convrt>();
+                        for (int i = 0; i < Dtfirbase.Rows.Count; i++)
+                        {
+                            FireBase_Convrt objFire = new FireBase_Convrt();
+                            // objFire.UsaerName = Dtfirbase.Rows[i]["UserName"].ToString();
+                            // objFire.Email_Id = Dtfirbase.Rows[i]["Email_Id"].ToString();
+                            //  objFire.Mobile_No = Dtfirbase.Rows[i]["Mobile_No"].ToString();
+                            objFire.EmployeeCode = Dtfirbase.Rows[i]["EmployeeCode"].ToString();
+                            objFire.Keyvalue = Dtfirbase.Rows[i]["Keyvalue"].ToString();
+                            objFire.Latitude = Dtfirbase.Rows[i]["Latitude"].ToString();
+                            objFire.Longitude = Dtfirbase.Rows[i]["Longitude"].ToString();
+                            objFire.Timestamp_dt = Convert.ToDateTime(Dtfirbase.Rows[i]["Timestamp_dt"]);
+                            objFire.vehicle_mode_f = Dtfirbase.Rows[i]["vehicle_mode_f"].ToString();
+                            objFire.total_distance_travelled_f = Dtfirbase.Rows[i]["total_distance_travelled_f"].ToString();
+                            testList.Add(objFire);
+                        }
+
+                        var FireBSLst = testList.Where(m => m.EmployeeCode == fb.EmployeeCode && m.Timestamp_dt.Value.Date == fb.Timestamp_dt.Value.Date).OrderBy(m => m.Timestamp_dt).ToList();
+                        //// var myBarChart = new List<FireBaseEntity> { lst.First(), lst.Last()};
+                        if (FireBSLst.Count > 0)
+                        {
+                            foreach (var drfir in FireBSLst)
+                            {
+                                //var username = drfir.UsaerName.ToString();
+                                // var Email_Id = drfir.Email_Id.ToString();
+                                var EmployeeCode = drfir.EmployeeCode.ToString();
+                                var total_distance_travelled_f = drfir.total_distance_travelled_f.ToString();
+                                var nodkey = drfir.Keyvalue.ToString();
+                                var datetime = drfir.Timestamp_dt.ToString();
+                                var vichle_Mode = drfir.vehicle_mode_f.ToString();
+                                la_titude = drfir.Latitude.ToString();
+                                lon_gitude = drfir.Longitude.ToString();
+                                coordinate = la_titude + "," + lon_gitude;
+                                if (vichle_Mode == "Running")
+                                {
+                                    if (vichle_Mode == "Running" && count == 0)
+                                    {
+                                        this.calcularRota(coordinate, nodkey, datetime, vichle_Mode, EmployeeCode, total_distance_travelled_f);//1464707663
+                                    }
+                                    count += 1;
+                                    count1 = 0;
+                                }
+                                else if (vichle_Mode == "Still")
+                                {
+                                    if (vichle_Mode == "Still" && count1 == 0)
+                                    {
+                                        this.calcularRota(coordinate, nodkey, datetime, vichle_Mode, EmployeeCode, total_distance_travelled_f);//1464707663
+                                    }
+                                    count1 += 1; count = 0;
+                                }
+                            
+
+                            }
+                            //objJsonResponse.Responsedata = DtFnlFB;
+                        }
+                        else
+                        {
+                            objJsonResponse.Message = "Something Issue While Searching....";
+                        }
+
+                    }
+                    catch (Exception ex)
+                    {
+                        ex.ToString();
+                    }
+                }
+                else
+                {
+                    objJsonResponse.Message = "No Record Found";
+                }
+            }
+
+            return objJsonResponse;
+
+        }
+
+       
+        public void calcularRota(string coordinate, string keyval,string datetime,string VichleMode,string Emp_code,string totaldistancetravelled_f)
+        {           
+            try
+            {
+                string googleKey = System.Configuration.ConfigurationManager.AppSettings["GoogleGeoCodeKey"];
+                //https://maps.googleapis.com/maps/api/geocode/xml?latlng=28.6109886,77.0946137&key=AIzaSyDaT24-DpjT0k8_TFXOQaDK6ZWWvq6_sd0
+                // var key=
+                xDoc.Load("https://maps.googleapis.com/maps/api/geocode/xml?latlng=" + coordinate + "&key=" + googleKey);//AIzaSyDaT24-DpjT0k8_TFXOQaDK6ZWWvq6_sd0");//AIzaSyDaT24-DpjT0k8_TFXOQaDK6ZWWvq6_sd0 
+                xNodelst = xDoc.GetElementsByTagName("result");//AIzaSyBFYBnr0I4zyUzsBt5TvDChFuz-LheAgfs
+                if (xNodelst.Count > 0)
+                {
+                    xNodelst = xDoc.GetElementsByTagName("result");
+                    xNode = xNodelst.Item(0);
+                    if (VichleMode == "Running")
+                    {
+                        DRFnlFB = DtFnlFB.NewRow();
+                        // DRFnlFB["UserName"] = Name.ToString();
+                        // DRFnlFB["Email_Id"] = email_id.ToString();
+                        DRFnlFB["total_distance_travelled_f"] = totaldistancetravelled_f.ToString();
+                        DRFnlFB["EmployeeCode"] = Emp_code.ToString();
+                        DRFnlFB["Keyvalue"] = keyval;
+                        DRFnlFB["Timestamp_dt"] = datetime.ToString();
+                        DRFnlFB["FullAddress"] = xNode.SelectSingleNode("formatted_address").InnerText;
+                        DRFnlFB["vehicle_mode_f"] = VichleMode.ToString();
+                        DtFnlFB.Rows.Add(DRFnlFB);
+                    }
+                    else if(VichleMode=="Still")
+                    {
+
+                    }
+                    objJsonResponse.Responsedata = DtFnlFB;
+                    objJsonResponse.IsSuccess = true;
+                   //xNode.SelectSingleNode("formatted_address").InnerText;
+                }
+                else
+                {
+                    DRFnlFB = DtFnlFB.NewRow();
+                    DRFnlFB["total_distance_travelled_f"] = totaldistancetravelled_f.ToString();
+                    DRFnlFB["EmployeeCode"] = Emp_code.ToString();
+                    DRFnlFB["Keyvalue"] = keyval;
+                    DRFnlFB["Timestamp_dt"] = datetime.ToString();
+                    DRFnlFB["vehicle_mode_f"] = VichleMode.ToString();
+                    DRFnlFB["ErrorMsg"] = xDoc.InnerText;
+                    DtFnlFB.Rows.Add(DRFnlFB);
+                    objJsonResponse.Responsedata = DtFnlFB;
+                    //DRFnlFB["UserName"] = Name.ToString();
+                    //DRFnlFB["Email_Id"] = email_id.ToString();
+                }
+            }
+            catch(Exception ex)
+            {
+                ex.ToString();
+            }
+           
+        }
+    
+    }
+}
+
+
